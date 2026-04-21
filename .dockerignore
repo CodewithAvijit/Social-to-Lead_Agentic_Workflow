@@ -1,0 +1,17 @@
+.git
+.gitignore
+
+env
+venv/
+.env
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+.vscode/
+.idea/
+.DS_Store
+
+Readme.md
+DEPLOYMENT.md
