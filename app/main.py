@@ -27,29 +27,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# In-memory session store — key: session_id, value: LangGraph State dict
-# In production, use Redis with TTL for scalability
+
 state_store: dict = {}
 
 
-# ---------------------------------------------------------------------------
-# Request / Response schemas
-# ---------------------------------------------------------------------------
 
 class ChatRequest(BaseModel):
     message: str
-    session_id: str = "default"   # allows multi-user isolation
+    session_id: str = "default"  
 
 
 class ChatResponse(BaseModel):
     response: str
     session_id: str
-    collected: dict   # returns what lead info has been gathered so far
+    collected: dict  
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 def _fresh_state() -> dict:
     return {
@@ -61,10 +54,6 @@ def _fresh_state() -> dict:
         "response":  "",
     }
 
-
-# ---------------------------------------------------------------------------
-# Endpoints
-# ---------------------------------------------------------------------------
 
 @app.get("/health")
 async def health():
@@ -86,21 +75,17 @@ async def webhook(payload: ChatRequest):
 
     session_id = payload.session_id
 
-    # Initialise session if new
     if session_id not in state_store:
         state_store[session_id] = _fresh_state()
 
-    # Append the user message to the session history
     state = state_store[session_id]
     state["messages"].append(message)
 
-    # Run the LangGraph workflow
     try:
         result = workflow.invoke(state)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Agent error: {str(exc)}")
 
-    # Persist updated state
     state_store[session_id] = result
 
     return ChatResponse(
@@ -116,7 +101,6 @@ async def webhook(payload: ChatRequest):
 
 @app.delete("/session/{session_id}")
 async def clear_session(session_id: str):
-    """Reset a session (useful for testing)."""
     if session_id in state_store:
         del state_store[session_id]
     return {"status": "cleared", "session_id": session_id}
@@ -124,7 +108,6 @@ async def clear_session(session_id: str):
 
 @app.get("/session/{session_id}")
 async def get_session(session_id: str):
-    """Inspect the current state of a session (debug endpoint)."""
     if session_id not in state_store:
         raise HTTPException(status_code=404, detail="Session not found.")
     s = state_store[session_id]

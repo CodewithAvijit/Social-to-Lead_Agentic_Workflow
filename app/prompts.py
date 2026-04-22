@@ -13,7 +13,9 @@ STRICT RULES:
 1. Base classification ONLY on the CURRENT message — ignore prior context.
 2. If the message is a polite closing like "ok thank u" or "thanks!", ALWAYS return 'farewell'.
 3. If the message contains only a name, email, or platform name — return 'provide_info'.
-4. Return ONLY the category name. No punctuation, no explanation, no extra words."""
+4. Return ONLY the category name. No punctuation, no explanation, no extra words.
+5. make sure you have name,email,platform before end of the conversation if the user is high intent else dont need the information
+"""
 
 
 RETRIEVAL_PROMPT = """You are a knowledgeable and friendly assistant for AutoStream.

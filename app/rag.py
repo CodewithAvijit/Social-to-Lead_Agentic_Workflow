@@ -10,17 +10,12 @@ from langchain.text_splitter import MarkdownHeaderTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 
-# Resolve path relative to this file's location
 _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KNOWLEDGE_BASE_PATH = os.path.join(_BASE_DIR, "data", "knowledge_base.md")
 
-# ---------------------------------------------------------------------------
-# Initialise vector store at import time (once per process)
-# ---------------------------------------------------------------------------
 _vectorstore = None
 
 def _build_vectorstore():
-    """Load the markdown knowledge base, split by headers, embed, and index."""
     global _vectorstore
 
     if not os.path.exists(KNOWLEDGE_BASE_PATH):
@@ -28,11 +23,9 @@ def _build_vectorstore():
         return
 
     try:
-        # Load raw text
         loader = TextLoader(KNOWLEDGE_BASE_PATH, encoding="utf-8")
         raw_docs = loader.load()
 
-        # Split by markdown headers for better retrieval granularity
         splitter = MarkdownHeaderTextSplitter(
             headers_to_split_on=[
                 ("#", "h1"),
@@ -49,7 +42,6 @@ def _build_vectorstore():
             for doc in split_docs
         ]
 
-        # Local embeddings — no API key required
         embeddings = HuggingFaceEmbeddings(
             model_name="sentence-transformers/all-MiniLM-L6-v2",
             model_kwargs={"device": "cpu"},
@@ -63,25 +55,10 @@ def _build_vectorstore():
         _vectorstore = None
 
 
-# Build on module load
 _build_vectorstore()
 
 
-# ---------------------------------------------------------------------------
-# Public API
-# ---------------------------------------------------------------------------
-
 def query_knowledge_base(query: str, k: int = 3) -> str:
-    """
-    Retrieve the most relevant chunks from the knowledge base for a given query.
-
-    Args:
-        query: Natural-language question from the user.
-        k:     Number of chunks to retrieve.
-
-    Returns:
-        Concatenated text of the top-k relevant chunks, or an empty string on failure.
-    """
     if _vectorstore is None:
         return ""
 
